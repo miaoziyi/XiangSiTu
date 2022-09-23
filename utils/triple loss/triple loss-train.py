@@ -30,7 +30,7 @@ print("REPLICAS: ", strategy.num_replicas_in_sync)
 
 # PT1_GCS_DS_PATH = KaggleDatasets().get_gcs_path('results')
 # print(PT1_GCS_DS_PATH)
-data_dir = 'tfrecords/spuids_1w'
+data_dir = '../tfrecords/spuids_1w'
 
 BATCH_SIZE = 64 * strategy.num_replicas_in_sync
 EPOCHS = 20

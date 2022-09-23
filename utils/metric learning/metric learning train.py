@@ -1,6 +1,6 @@
 import sys
 
-sys.path.append('../pytorch-image-models-master/')
+sys.path.append('../../pytorch-image-models-master/')
 
 from tqdm import tqdm
 import math
@@ -498,7 +498,7 @@ def eval_fn(data_loader, model, criterion, device):
     return loss_score
 
 
-data = pd.read_csv('txt/per_leafCid_250_StratifiedKFold.csv')
+data = pd.read_csv('../txt/per_leafCid_250_StratifiedKFold.csv')
 data['filepath'] = data['imgPath'].apply(lambda x: os.path.join(r'D:\xiangsitu\imgs', x))
 print(data.head())
 

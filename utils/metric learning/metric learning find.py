@@ -1,5 +1,6 @@
 import sys
-sys.path.append('../pytorch-image-models-master/')
+
+sys.path.append('../../pytorch-image-models-master/')
 
 from tqdm import tqdm
 import math
@@ -10,22 +11,25 @@ import numpy as np
 
 # Visuals and CV2
 import cv2
-
+import json
 # albumentations for augs
 import albumentations
 from albumentations.pytorch.transforms import ToTensorV2
 
-#torch
+# torch
 import torch
 import timm
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-from torch.utils.data import Dataset,DataLoader
-
+from torch.utils.data import Dataset, DataLoader
 
 import gc
 import matplotlib.pyplot as plt
+import faiss
+from faiss import normalize_L2
+from PIL import Image
+import time
 # import cudf
 # import cuml
 # import cupy
@@ -34,31 +38,28 @@ import matplotlib.pyplot as plt
 # from cuml.neighbors import NearestNeighbors
 
 DIM = (512, 512)
+IMAGE_SIZE = 128
 NUM_WORKERS = 0
-BATCH_SIZE = 64
-# SEED = 2020
-
+BATCH_SIZE = 24
+SEED = 2020
 device = torch.device('cuda')
 
-# 注意修改！！！！！！！！
-CLASSES = 12046
+# 注意修改!!!!!!!!!!!!!!!!!
+CLASSES = 12039
 
 ################################################  ADJUSTING FOR CV OR SUBMIT ##############################################
-# CHECK_SUB = False
-# GET_CV = True
+CHECK_SUB = False
+GET_CV = True
 ################################################# MODEL ####################################################################
-
-model_name = 'efficientnet_b3' #efficientnet_b0-b7
-
+model_name = 'efficientnet_b3'  # efficientnet_b0-b7
 ################################################ MODEL PATH ###############################################################
-
-IMG_MODEL_PATH = 'model/model_efficientnet_b3_IMG_SIZE_512_arcface_all.bin'
+# 模型改变
+IMG_MODEL_PATH = '../model/model_efficientnet_b3_IMG_SIZE_512_arcface.bin'
 # IMG_MODEL_PATH = r'C:\Users\Administrator\Documents\Tencent Files\2174661138\FileRecv\model_efficientnet_b3_IMG_SIZE_512_arcface (1).bin'
-
 ################################################ Metric Loss and its params #######################################################
-loss_module = 'arcface' #'cosface' #'adacos'
-# s = 30.0
-# m = 0.5
+loss_module = 'arcface'  # 'cosface' #'adacos'
+s = 30.0
+m = 0.5
 ls_eps = 0.0
 easy_margin = False
 
@@ -85,7 +86,7 @@ class ImgDataset(Dataset):
 
 
 class AdaCos(nn.Module):
-    def __init__(self, in_features, out_features, m=0.50, ls_eps=0, theta_zero=math.pi/4):
+    def __init__(self, in_features, out_features, m=0.50, ls_eps=0, theta_zero=math.pi / 4):
         super(AdaCos, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -131,6 +132,7 @@ class ArcMarginProduct(nn.Module):
             m: margin
             cos(theta + m)
         """
+
     def __init__(self, in_features, out_features, s=30.0, m=0.50, easy_margin=False, ls_eps=0.0):
         super(ArcMarginProduct, self).__init__()
         self.in_features = in_features
@@ -197,7 +199,8 @@ class AddMarginProduct(nn.Module):
         # one_hot = one_hot.cuda() if cosine.is_cuda else one_hot
         one_hot.scatter_(1, label.view(-1, 1).long(), 1)
         # -------------torch.where(out_i = {x_i if condition_i else y_i) -------------
-        output = (one_hot * phi) + ((1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
+        output = (one_hot * phi) + (
+                (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
         output *= self.s
         # print(output)
 
@@ -283,12 +286,11 @@ class ImgNet(nn.Module):
 
 
 def get_test_transforms():
-
     return albumentations.Compose(
         [
-            albumentations.Resize(DIM[0],DIM[1],always_apply=True),
+            albumentations.Resize(DIM[0], DIM[1], always_apply=True),
             albumentations.Normalize(),
-        ToTensorV2(p=1.0)
+            ToTensorV2(p=1.0)
         ]
     )
 
@@ -299,8 +301,9 @@ def get_image_embeddings(image_paths):
     model = ImgNet(n_classes=CLASSES, model_name=model_name)
     model.eval()
 
-    model.load_state_dict(torch.load(IMG_MODEL_PATH), strict=False)
+    model.load_state_dict(torch.load(IMG_MODEL_PATH, map_location='cuda'), strict=False)
     model = model.to(device)
+    print(model.final)
 
     image_dataset = ImgDataset(image_paths=image_paths, transforms=get_test_transforms())
     image_loader = torch.utils.data.DataLoader(
@@ -328,7 +331,81 @@ def get_image_embeddings(image_paths):
     return image_embeddings
 
 
-df = pd.read_csv('txt/img_test_path.csv')
-image_paths = 'D:/xiangsitu/img_test/' + df['imgPath']
+embeddings = np.load('../data/metric_learning_250_new.npy')
+normalize_L2(embeddings)
+# faiss索引构建
+index = faiss.IndexIDMap(faiss.IndexFlatIP(512))
+index.add_with_ids(embeddings, np.array(range(0, len(embeddings))).astype('int64'))
+
+# 保存索引
+# faiss.write_index(index, 'imgs-1w.index')
+
+
+def search(query_vector, top_k, index):
+    t = time.time()
+    print(query_vector.shape)
+    #     print(query_vector)
+    normalize_L2(query_vector)
+    top_k = index.search(query_vector, top_k)
+    #     print(top_k)
+    print('>>>> Results in Total Time: {}'.format(time.time() - t))
+    top_k_ids = top_k[1].tolist()[0]
+    return top_k_ids
+
+
+def get_image(img):
+    image = Image.open('D:/xiangsitu/img_test/' + img)
+    try:
+        layers = image.layers
+        if layers == 3:
+            image = image.resize((IMAGE_SIZE, IMAGE_SIZE))
+            image = np.asarray(image) / 255.0
+            return image
+    except:
+        I1 = cv2.imread('D:/xiangsitu/img_test/' + img)
+        I1_cvt2pil = Image.fromarray(cv2.cvtColor(I1, cv2.COLOR_BGR2RGB))
+        I1_cvt2pil = I1_cvt2pil.resize((IMAGE_SIZE, IMAGE_SIZE))
+        I1_cvt2pil = np.asarray(I1_cvt2pil) / 255.0
+        return I1_cvt2pil
+
+
+def get_image2(img):
+    image = Image.open(img)
+    try:
+        layers = image.layers
+        if layers == 3:
+            image = image.resize((IMAGE_SIZE, IMAGE_SIZE))
+            image = np.asarray(image) / 255.0
+            return image
+    except:
+        I1 = cv2.imread(img)
+        I1_cvt2pil = Image.fromarray(cv2.cvtColor(I1, cv2.COLOR_BGR2RGB))
+        I1_cvt2pil = I1_cvt2pil.resize((IMAGE_SIZE, IMAGE_SIZE))
+        I1_cvt2pil = np.asarray(I1_cvt2pil) / 255.0
+        return I1_cvt2pil
+
+
+image_ids = pd.read_csv('../txt/img_test_path.csv')
+print('read csv:success...........')
+
+# 加载搜索集
+df = pd.read_csv('../txt/query-imgPath2.csv')
+image_paths = df['imgPath']
 image_embeddings = get_image_embeddings(image_paths.values)
-np.save('data/metric_learning_250_all.npy', image_embeddings)
+
+e = {}
+with open('../txt/query-imgPath2.txt', 'r', encoding='utf8') as file:
+    imgs = file.readlines()
+for i in range(len(image_embeddings)):
+    print(i)
+    img_json = imgs[i].replace('D:/xiangsitu/', '').replace('\n', '')
+    embedding = np.array([image_embeddings[i]])
+    similar_images = search(embedding, top_k=49, index=index)
+    query_images = []
+    for i in range(7):
+        for j in range(7):
+            img_index = similar_images[j + (i * 7)]
+            query_images.append("img_test/" + image_ids.loc[img_index].imgPath)
+    e[img_json] = query_images
+with open("D:/xiangsitu/m/query250_new.json", 'w', encoding='utf-8') as f:
+    json.dump(e, f)

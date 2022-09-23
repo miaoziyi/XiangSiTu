@@ -75,7 +75,7 @@ print('load model:success.........')
 
 image_ids = pd.read_csv(
     # r'D:\mzy\mzy\img1_0\train\data.csv'
-    'txt/img_test_path.csv'
+    '../txt/img_test_path.csv'
 )
 print('read csv:success...........')
 
@@ -101,4 +101,4 @@ print('get image:success............')
 images = np.array(images)
 
 embeddings = embedding_model.predict(images)
-np.save('data/data_embedding_1w_1.npy', embeddings)
+np.save('../data/data_embedding_1w_1.npy', embeddings)

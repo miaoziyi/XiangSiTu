@@ -5,7 +5,7 @@ from tqdm.notebook import tqdm
 
 error = []
 
-all_images_meta = pd.read_csv('txt/spuids_10000_1.csv')
+all_images_meta = pd.read_csv('../txt/spuids_10000_1.csv')
 all_images_meta = all_images_meta[['imgId', 'spuId', 'imgPath']]
 print(all_images_meta.head())
 
