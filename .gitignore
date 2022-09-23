@@ -1,0 +1,15 @@
+img1_0/model/*
+img1_0/txt/*
+img1_0/img-10w/*
+img1_0/img-300w/*
+pytorch-image-models-master/*
+zz/dataset/*
+zz/results/*
+zz/tools/*
+zz/normal/*
+zz/test/*
+zz/test2/*
+utils/data/*
+utils/model/*
+utils/tfrecords/*
+utils/txt/*
