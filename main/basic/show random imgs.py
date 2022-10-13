@@ -3,7 +3,7 @@ import pandas as pd
 import cv2, matplotlib.pyplot as plt
 import os
 
-train = pd.read_csv('../../img1_0/img-300w/per_leafCid_250_1.csv', keep_default_na=False)
+train = pd.read_csv('../img1_0/img-300w/per_leafCid_250_0_3.csv', keep_default_na=False)
 print('train shape is', train.shape)
 # train = train[train['imgPath'] != '']
 print('train shape is', train.shape)

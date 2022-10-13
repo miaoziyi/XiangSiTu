@@ -32,7 +32,7 @@ def generate_triplets(df):
     return aux
 
 
-train = pd.read_csv('../../img1_0/img-300w/per_leafCid_250_1.csv')
+train = pd.read_csv('../img1_0/img-300w/per_leafCid_250_1.csv')
 
 # Useful dictionaries; use below to convert if needed
 id_to_img = train.set_index('imgId').imgPath.to_dict()

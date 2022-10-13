@@ -1,5 +1,5 @@
 className = '17'
-filename = "../../img1_0/train/result_1.txt"
+filename = "../img1_0/train/result_1.txt"
 outfilename = "D:\\mzy\\img_test_17\\17.txt"
 with open(filename, mode="r", encoding="utf-8") as f:
     with open(outfilename, "w", encoding='utf-8') as f1:

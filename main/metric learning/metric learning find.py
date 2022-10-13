@@ -45,7 +45,7 @@ SEED = 2020
 device = torch.device('cuda')
 
 # 注意修改!!!!!!!!!!!!!!!!!
-CLASSES = 12039
+CLASSES = 11973
 
 ################################################  ADJUSTING FOR CV OR SUBMIT ##############################################
 CHECK_SUB = False
@@ -53,8 +53,9 @@ GET_CV = True
 ################################################# MODEL ####################################################################
 model_name = 'efficientnet_b3'  # efficientnet_b0-b7
 ################################################ MODEL PATH ###############################################################
-# 模型改变
-IMG_MODEL_PATH = '../model/model_efficientnet_b3_IMG_SIZE_512_arcface.bin'
+
+# 模型修改
+IMG_MODEL_PATH = '../model/model_efficientnet_b3_IMG_SIZE_512_arcface_250_5.bin'
 # IMG_MODEL_PATH = r'C:\Users\Administrator\Documents\Tencent Files\2174661138\FileRecv\model_efficientnet_b3_IMG_SIZE_512_arcface (1).bin'
 ################################################ Metric Loss and its params #######################################################
 loss_module = 'arcface'  # 'cosface' #'adacos'
@@ -76,7 +77,12 @@ class ImgDataset(Dataset):
         image_path = self.image_paths[index]
 
         image = cv2.imread(image_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # 改
+        try:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        except:
+            print(image_path)
+            exit(1)
 
         if self.augmentations:
             augmented = self.augmentations(image=image)
@@ -331,16 +337,6 @@ def get_image_embeddings(image_paths):
     return image_embeddings
 
 
-embeddings = np.load('../data/metric_learning_250_new.npy')
-normalize_L2(embeddings)
-# faiss索引构建
-index = faiss.IndexIDMap(faiss.IndexFlatIP(512))
-index.add_with_ids(embeddings, np.array(range(0, len(embeddings))).astype('int64'))
-
-# 保存索引
-# faiss.write_index(index, 'imgs-1w.index')
-
-
 def search(query_vector, top_k, index):
     t = time.time()
     print(query_vector.shape)
@@ -385,16 +381,25 @@ def get_image2(img):
         return I1_cvt2pil
 
 
-image_ids = pd.read_csv('../txt/img_test_path.csv')
+# 修改
+embeddings = np.load('../data/metric_learning_250_new_5_newTest.npy')
+normalize_L2(embeddings)
+# faiss索引构建
+index = faiss.IndexIDMap(faiss.IndexFlatIP(512))
+index.add_with_ids(embeddings, np.array(range(0, len(embeddings))).astype('int64'))
+# 保存索引
+# faiss.write_index(index, 'imgs-1w.index')
+
+image_ids = pd.read_csv('../txt/img_test_path_new.csv')
 print('read csv:success...........')
 
 # 加载搜索集
-df = pd.read_csv('../txt/query-imgPath2.csv')
+df = pd.read_csv('../txt/query-imgPath_new.csv')
 image_paths = df['imgPath']
 image_embeddings = get_image_embeddings(image_paths.values)
 
 e = {}
-with open('../txt/query-imgPath2.txt', 'r', encoding='utf8') as file:
+with open('../txt/query-imgPath_new.txt', 'r', encoding='utf8') as file:
     imgs = file.readlines()
 for i in range(len(image_embeddings)):
     print(i)
@@ -405,7 +410,9 @@ for i in range(len(image_embeddings)):
     for i in range(7):
         for j in range(7):
             img_index = similar_images[j + (i * 7)]
-            query_images.append("img_test/" + image_ids.loc[img_index].imgPath)
+            query_images.append("img_test_new/" + image_ids.loc[img_index].imgPath)
     e[img_json] = query_images
-with open("D:/xiangsitu/m/query250_new.json", 'w', encoding='utf-8') as f:
+
+# 修改
+with open("D:/xiangsitu/m/query250_new_5_newTest.json", 'w', encoding='utf-8') as f:
     json.dump(e, f)

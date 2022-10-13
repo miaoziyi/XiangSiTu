@@ -1,7 +1,7 @@
 import os
 
-ff = open('query-imgPath3.txt', 'w')
-
+# 追加
+ff = open('query-imgPath_new3.txt', 'w')
 
 # 查找指定文件夹下所有相同名称的文件
 def search_file(dirPath, fileName, ff):
@@ -16,11 +16,13 @@ def search_file(dirPath, fileName, ff):
 
 
 if __name__ == "__main__":
-    dirPath = 'D:\\xiangsitu\\img_test\\new'
-    with open('../txt/query-imgPath2.txt', 'r', encoding='utf8') as file:
+    dirPath = 'D:\\xiangsitu\\imgs'
+    with open(r'imgPath_new_error.txt', 'r', encoding='utf8') as file:
         imgs = file.readlines()
         for i, img in enumerate(imgs):
+            print(i)
             # 图片存在
+            # img = img.replace('\n', '')
             img = img.split('/')[-1].replace('\n', '')
             search_file(dirPath, img, ff)
             # ff.write(path+'\n')

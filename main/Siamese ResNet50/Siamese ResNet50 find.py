@@ -71,7 +71,7 @@ print('query embeddings predict:success...')
 
 image_ids = pd.read_csv('../txt/img_test_path.csv')
 e = {}
-with open('../txt/query-imgPath2.txt', 'r', encoding='utf8') as file:
+with open('../txt/query-imgPath_old.txt', 'r', encoding='utf8') as file:
     imgs = file.readlines()
 for i in range(len(test_embeddings)):
     print(i)

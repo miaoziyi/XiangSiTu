@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append('../../pytorch-image-models-master/')
 
 from tqdm import tqdm
@@ -7,25 +8,28 @@ import random
 import os
 import pandas as pd
 import numpy as np
-
+from torch.nn import Parameter
 # Visuals and CV2
 import cv2
-
+import json
 # albumentations for augs
 import albumentations
 from albumentations.pytorch.transforms import ToTensorV2
 
-#torch
+# torch
 import torch
 import timm
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-from torch.utils.data import Dataset,DataLoader
-
+from torch.utils.data import Dataset, DataLoader
 
 import gc
 import matplotlib.pyplot as plt
+import faiss
+from faiss import normalize_L2
+from PIL import Image
+import time
 # import cudf
 # import cuml
 # import cupy
@@ -34,31 +38,35 @@ import matplotlib.pyplot as plt
 # from cuml.neighbors import NearestNeighbors
 
 DIM = (512, 512)
+IMAGE_SIZE = 128
 NUM_WORKERS = 0
-BATCH_SIZE = 64
-# SEED = 2020
+BATCH_SIZE = 24
+SEED = 2020
 
 device = torch.device('cuda')
 
-# 注意修改！！！！！！！！
-CLASSES = 12046
+# 注意修改!!!!!!!!!!!!!!!!!
+CLASSES = 2079
 
 ################################################  ADJUSTING FOR CV OR SUBMIT ##############################################
-# CHECK_SUB = False
-# GET_CV = True
+CHECK_SUB = False
+GET_CV = True
 ################################################# MODEL ####################################################################
-
-model_name = 'efficientnet_b3' #efficientnet_b0-b7
-
+model_name = 'efficientnet_b3'  # efficientnet_b0-b7
 ################################################ MODEL PATH ###############################################################
 
-IMG_MODEL_PATH = '../model/model_efficientnet_b3_IMG_SIZE_512_arcface_all.bin'
+# 模型修改
+IMG_MODEL_PATH = '../model/metric 17/model_efficientnet_b3_IMG_SIZE_512_arcface_50_17_bigS.bin'
 # IMG_MODEL_PATH = r'C:\Users\Administrator\Documents\Tencent Files\2174661138\FileRecv\model_efficientnet_b3_IMG_SIZE_512_arcface (1).bin'
 
 ################################################ Metric Loss and its params #######################################################
-loss_module = 'arcface' #'cosface' #'adacos'
-# s = 30.0
-# m = 0.5
+epoch = IMG_MODEL_PATH.split('_')[7]
+# 在这个里面好像不影响
+# loss_module = 'cosface' # 'cosface' #'adacos' arcface
+loss_module = IMG_MODEL_PATH.split('_')[6]
+
+s = 30.0
+m = 0.5
 ls_eps = 0.0
 easy_margin = False
 
@@ -85,7 +93,7 @@ class ImgDataset(Dataset):
 
 
 class AdaCos(nn.Module):
-    def __init__(self, in_features, out_features, m=0.50, ls_eps=0, theta_zero=math.pi/4):
+    def __init__(self, in_features, out_features, m=0.50, ls_eps=0, theta_zero=math.pi / 4):
         super(AdaCos, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -131,6 +139,7 @@ class ArcMarginProduct(nn.Module):
             m: margin
             cos(theta + m)
         """
+
     def __init__(self, in_features, out_features, s=30.0, m=0.50, easy_margin=False, ls_eps=0.0):
         super(ArcMarginProduct, self).__init__()
         self.in_features = in_features
@@ -197,7 +206,8 @@ class AddMarginProduct(nn.Module):
         # one_hot = one_hot.cuda() if cosine.is_cuda else one_hot
         one_hot.scatter_(1, label.view(-1, 1).long(), 1)
         # -------------torch.where(out_i = {x_i if condition_i else y_i) -------------
-        output = (one_hot * phi) + ((1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
+        output = (one_hot * phi) + (
+                (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
         output *= self.s
         # print(output)
 
@@ -212,7 +222,8 @@ class ImgNet(nn.Module):
                  use_fc=True,
                  fc_dim=512,
                  dropout=0.0,
-                 loss_module='softmax',
+                 loss_module=loss_module,
+                 # loss_module='softmax',
                  s=30.0,
                  margin=0.50,
                  ls_eps=0.0,
@@ -283,12 +294,11 @@ class ImgNet(nn.Module):
 
 
 def get_test_transforms():
-
     return albumentations.Compose(
         [
-            albumentations.Resize(DIM[0],DIM[1],always_apply=True),
+            albumentations.Resize(DIM[0], DIM[1], always_apply=True),
             albumentations.Normalize(),
-        ToTensorV2(p=1.0)
+            ToTensorV2(p=1.0)
         ]
     )
 
@@ -299,8 +309,9 @@ def get_image_embeddings(image_paths):
     model = ImgNet(n_classes=CLASSES, model_name=model_name)
     model.eval()
 
-    model.load_state_dict(torch.load(IMG_MODEL_PATH), strict=False)
+    model.load_state_dict(torch.load(IMG_MODEL_PATH, map_location='cuda'), strict=False)
     model = model.to(device)
+    print(model.final)
 
     image_dataset = ImgDataset(image_paths=image_paths, transforms=get_test_transforms())
     image_loader = torch.utils.data.DataLoader(
@@ -328,7 +339,99 @@ def get_image_embeddings(image_paths):
     return image_embeddings
 
 
-df = pd.read_csv('../txt/img_test_path.csv')
-image_paths = 'D:/xiangsitu/img_test/' + df['imgPath']
+def search(query_vector, top_k, index):
+    t = time.time()
+    print(query_vector.shape)
+    #     print(query_vector)
+    normalize_L2(query_vector)
+    top_k = index.search(query_vector, top_k)
+    #     print(top_k)
+    print('>>>> Results in Total Time: {}'.format(time.time() - t))
+    top_k_ids = top_k[1].tolist()[0]
+    return top_k_ids
+
+
+def get_image(img):
+    image = Image.open('D:/xiangsitu/img_test/' + img)
+    try:
+        layers = image.layers
+        if layers == 3:
+            image = image.resize((IMAGE_SIZE, IMAGE_SIZE))
+            image = np.asarray(image) / 255.0
+            return image
+    except:
+        I1 = cv2.imread('D:/xiangsitu/img_test/' + img)
+        I1_cvt2pil = Image.fromarray(cv2.cvtColor(I1, cv2.COLOR_BGR2RGB))
+        I1_cvt2pil = I1_cvt2pil.resize((IMAGE_SIZE, IMAGE_SIZE))
+        I1_cvt2pil = np.asarray(I1_cvt2pil) / 255.0
+        return I1_cvt2pil
+
+
+def get_image2(img):
+    image = Image.open(img)
+    try:
+        layers = image.layers
+        if layers == 3:
+            image = image.resize((IMAGE_SIZE, IMAGE_SIZE))
+            image = np.asarray(image) / 255.0
+            return image
+    except:
+        I1 = cv2.imread(img)
+        I1_cvt2pil = Image.fromarray(cv2.cvtColor(I1, cv2.COLOR_BGR2RGB))
+        I1_cvt2pil = I1_cvt2pil.resize((IMAGE_SIZE, IMAGE_SIZE))
+        I1_cvt2pil = np.asarray(I1_cvt2pil) / 255.0
+        return I1_cvt2pil
+
+
+# 修改
+embeddings = np.load(f'../data/metric 17/metric_learning_17_{epoch}_{loss_module}_bigS.npy')
+normalize_L2(embeddings)
+# faiss索引构建
+index = faiss.IndexIDMap(faiss.IndexFlatIP(512))
+index.add_with_ids(embeddings, np.array(range(0, len(embeddings))).astype('int64'))
+# 保存索引
+# faiss.write_index(index, 'imgs-1w.index')
+
+# 加载搜索集
+df = pd.read_csv('../txt/query test/query_1w_imgPath.csv')
+image_paths = df['imgPath']
 image_embeddings = get_image_embeddings(image_paths.values)
-np.save('data/metric_learning_250_all.npy', image_embeddings)
+
+def search(query_vector, top_k, index):
+    t = time.time()
+    #     print(query_vector.shape)
+    #     print(query_vector)
+    normalize_L2(query_vector)
+    top_k = index.search(query_vector, top_k)
+    #     print(top_k)
+    print('>>>> Results in Total Time: {}'.format(time.time() - t))
+    top_k_ids = top_k[1].tolist()[0]
+    return top_k_ids
+
+
+def get_image(img):
+    image = Image.open('D:\mzy\imgs_1w\imgs_1/' + img)
+    image = image.resize((128, 128))
+    image = np.asarray(image) / 255.0
+    return image
+
+
+image_ids = pd.read_csv(
+    r'D:\mzy\imgs_1w/result_1.csv'
+)
+for n in range(len(image_embeddings)):
+    print(n)
+    similar_images = search(np.array([image_embeddings[n]]), top_k=64, index=index)
+
+    fig, ax = plt.subplots(8, 8, figsize=(60, 60))
+    for i in range(8):
+        for j in range(8):
+            img_index = similar_images[j + (i * 8)]
+
+            landmark_id = image_ids.loc[img_index].spuId
+            ax[i, j].set_title('spuId: {}'.format(img_index))
+            ax[i, j].imshow(
+                get_image(image_ids.loc[img_index].imgPath)
+            )
+    # plt.show()
+    fig.savefig(r'D:\mzy\imgs_1w\query\result/'+str(n+1)+'_'+str(epoch)+'_'+str(DIM[0])+'_'+loss_module+'_bigS'+'.png')

@@ -2,7 +2,7 @@ import random
 import pandas as pd
 import time
 
-n = 8
+n = 5
 # df = pd.read_csv('..txt/result_1_few.csv')
 df = pd.read_csv(r"D:\xiangsitu\related\imgs_new.csv")
 
@@ -28,4 +28,4 @@ for leafCid in leafCids:
 
 df = df[df['skc'] == '1']
 df.drop(['skc'], axis=1, inplace=True)
-df.to_csv("../txt/per_leafCid_8"+".csv", index=False)
+df.to_csv("../txt/per_leafCid_5"+".csv", index=False)

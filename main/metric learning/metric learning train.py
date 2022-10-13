@@ -36,7 +36,7 @@ DIM = (512, 512)
 NUM_WORKERS = 0
 TRAIN_BATCH_SIZE = 8
 VALID_BATCH_SIZE = 8
-EPOCHS = 10
+EPOCHS = 50
 SEED = 42
 # LR = 3e-4
 
@@ -72,14 +72,15 @@ scheduler_params = {
     "lr_start": 1e-5,
     "lr_max": 1e-5 * TRAIN_BATCH_SIZE,
     "lr_min": 1e-6,
-    "lr_ramp_ep": 5,
+    # 修改
+    "lr_ramp_ep": 50,
     "lr_sus_ep": 0,
     "lr_decay": 0.8,
 }
 
 ############################################## Model Params ###############################################################
 model_params = {
-    'n_classes': 12046,  # 类别的数量，注意修改!!!!!!!!!!
+    'n_classes': 11973,  # 类别的数量，注意修改!!!!!!!!!!
     'model_name': 'efficientnet_b3',
     'use_fc': True,
     'fc_dim': 512,
@@ -498,7 +499,8 @@ def eval_fn(data_loader, model, criterion, device):
     return loss_score
 
 
-data = pd.read_csv('../txt/per_leafCid_250_StratifiedKFold.csv')
+# 修改
+data = pd.read_csv('../txt/per_leafCid_250_1_StratifiedKFold_5.csv')
 data['filepath'] = data['imgPath'].apply(lambda x: os.path.join(r'D:\xiangsitu\imgs', x))
 print(data.head())
 
@@ -570,7 +572,8 @@ def run():
 
         if valid_loss.avg < best_loss:
             best_loss = valid_loss.avg
-            torch.save(model.state_dict(), f'model_{model_name}_IMG_SIZE_{DIM[0]}_{loss_module}.bin')
+            # 修改
+            torch.save(model.state_dict(), f'../model/metric 250/newTest/model_{model_name}_IMG_SIZE_{DIM[0]}_{loss_module}_250_5.bin')
             print('best model found for epoch {}'.format(epoch))
 
 

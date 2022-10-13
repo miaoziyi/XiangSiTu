@@ -5,7 +5,7 @@ from sklearn import model_selection
 
 # fold = 5
 # df_label = pd.read_csv(
-#     # 'result_1.csv'
+#     # 'test_result_1.csv'
 #     r'D:\我的东西\实验室\老师工作安排\图像处理项目\imgs_30w.csv'
 # )
 # fold_lst = (len(df_label) // fold) * [i for i in range(fold)]
@@ -17,9 +17,9 @@ from sklearn import model_selection
 
 
 if __name__ == "__main__":
-    # Training data is in a csv file called train.csv
+    # Training data is in a csv file called 1w.csv
     # df = pd.read_csv("../txt/per_leafCid_250.csv")
-    df = pd.read_csv("../../img1_0/img-300w/per_leafCid_250_1_2.csv")
+    df = pd.read_csv("../txt/test_17.csv")
 
     # we create a new column called kfold and fill it with -1
     df["kfold"] = -1
@@ -33,4 +33,4 @@ if __name__ == "__main__":
     for f, (t_, v_) in enumerate(kf.split(X=df, y=y)):
         df.loc[v_, 'kfold'] = f
     # save the new csv with kfold column
-    df.to_csv("../txt/per_leafCid_250_1_StratifiedKFold_2.csv", index=False)
+    df.to_csv("../txt/test_17_StratifiedKFold.csv", index=False)

@@ -68,11 +68,12 @@ optimizer = optim.Adam(model.parameters(), lr=0.01)
 model.eval()
 
 print("----> Loading checkpoint")
-checkpoint = torch.load("./checpoint_epoch_5_3.pt")  # Try to load last checkpoint
+checkpoint = torch.load("model/checpoint_epoch_19_5.pt")  # Try to load last checkpoint
 model.load_state_dict(checkpoint["model_state_dict"])
 optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
-train = pd.read_csv("../utils/txt/per_leafCid_250.csv", keep_default_na=False)
+# 修改
+train = pd.read_csv("../txt/per_leafCid_250.csv", keep_default_na=False)
 
 
 # train[:5]
@@ -123,7 +124,8 @@ print(len(train2))
 train3 = train1[train1['imgPath'] == '']
 print(len(train3))
 
-outputpath1 = 'img-300w/per_leafCid_250_1_2.csv'
-outputpath0 = 'img-300w/per_leafCid_250_0_2.csv'
+# 修改
+outputpath1 = 'img-300w/per_leafCid_250_1_5.csv'
+outputpath0 = 'img-300w/per_leafCid_250_0_5.csv'
 train2.to_csv(outputpath1, sep=',', index=False, header=True)
 train3.to_csv(outputpath0, sep=',', index=False, header=True)

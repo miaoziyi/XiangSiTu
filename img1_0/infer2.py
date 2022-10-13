@@ -129,6 +129,6 @@ train3 = train1[train1['imgPath'] == '']
 print(len(train3))
 
 outputpath1 = 'img-10w/data.csv'
-outputpath0 = 'img-10w/result_0.csv'
+outputpath0 = 'img-10w/test_result_0.csv'
 train2.to_csv(outputpath1, sep=',', index=False, header=True)
 train3.to_csv(outputpath0, sep=',', index=False, header=True)

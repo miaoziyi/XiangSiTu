@@ -131,7 +131,7 @@ def get_image(img):
         return I1_cvt2pil
 
 # 保存搜索结果图片
-with open('txt/query-imgPath2.txt', 'r', encoding='utf8') as file:
+with open('txt/query-imgPath_old.txt', 'r', encoding='utf8') as file:
     imgs = file.readlines()
     for m, img in enumerate(imgs):
         print(m)

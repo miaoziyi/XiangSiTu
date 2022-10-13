@@ -9,7 +9,7 @@ zz/tools/*
 zz/normal/*
 zz/test/*
 zz/test2/*
-utils/data/*
-utils/model/*
-utils/tfrecords/*
-utils/txt/*
+main/data/*
+main/model/*
+main/tfrecords/*
+main/txt/*

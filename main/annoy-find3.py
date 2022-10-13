@@ -105,7 +105,7 @@ def get_image(img):
         I1_cvt2pil = np.asarray(I1_cvt2pil) / 255.0
         return I1_cvt2pil
 
-with open('txt/query-imgPath2.txt', 'r', encoding='utf8') as file:
+with open('txt/query-imgPath_old.txt', 'r', encoding='utf8') as file:
     imgs = file.readlines()
     e = {}
     for m, img in enumerate(imgs):

@@ -32,12 +32,12 @@ def preprocess_image(filename, target_shape=target_shape):
 strategy = kt.accelerator.auto_select(verbose=True)
 with strategy.scope():
     encoder = tf.keras.models.load_model(
-       'model/encoder.h5'
+       '../model/Siamese ResNet50/encoder.h5'
     )
 
-imgs = pd.read_csv('../../utils/txt/img_test_path.csv')
+imgs = pd.read_csv('../txt/query test/img_test_path_new.csv')
 dimgs = kt.image.build_dataset(
-    'D:/xiangsitu/img_test/' + imgs['imgPath'],
+    'D:/xiangsitu/img_test_new/' + imgs['imgPath'],
     decode_fn=preprocess_image
 )
 

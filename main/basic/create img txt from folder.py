@@ -1,11 +1,11 @@
 import os
 
 # 打开一个文件，可写模式
-ff = open('../txt/new.txt', 'a')
+ff = open('new_test.txt', 'w')
 
-for root, dirs_name, files_name in os.walk(r'D:\xiangsitu\img_test\online_result\online_result_06\in_images'):
+for root, dirs_name, files_name in os.walk(r'D:\xiangsitu\img_test_all_error'):
     for i in files_name:
-        ff.write('new/'+i+'\n')
+        ff.write(i+'\n')
 
 
 

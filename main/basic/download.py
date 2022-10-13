@@ -7,7 +7,7 @@ import os
 base_path = 'D:/mzy/imgs/1/'
 
 # 读取txt文件
-with open('D:/mzy/mzy/img1_0/120207/result_1.txt', 'r', encoding='utf8') as file:
+with open('/main/img1_0/120207/result_1.txt', 'r', encoding='utf8') as file:
     urls = file.readlines()
     # 计算链接地址条数
     n_urls = len(urls)
