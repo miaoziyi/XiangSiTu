@@ -1,5 +1,2 @@
-# XiangSiTu
-
-img1_0：整体局部code
-
-zz：张政code
+v01所在目录：
+XiangSiTu/main/metric learning/v01/
