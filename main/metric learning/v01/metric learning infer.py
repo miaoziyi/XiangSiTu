@@ -143,4 +143,5 @@ image_embeddings = get_image_embeddings(image_paths.values)
 
 # 修改
 name = args.model_path.replace('.bin', '')
-np.save(f'{name}.npy', image_embeddings)
+np.save(f'embedding/{name}.npy', image_embeddings)
+print(f'测试集嵌入向量保存至embedding/{name}.npy')

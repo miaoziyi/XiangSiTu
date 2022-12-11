@@ -43,7 +43,7 @@ parser.add_argument('--dimension', type=int, default=512)
 parser.add_argument('--batch', type=int, default=8)
 parser.add_argument('-t', '--train_csv_path', required=True, help='训练集文件路径')
 args = parser.parse_args()
-parser.add_argument('-s', '--save_model_name', default=f'dim_{args.dimension}', help='训练模型保存')
+parser.add_argument('-s', '--save_model_name', default=f'model/dim_{args.dimension}', required=True, help='训练模型保存名称')
 
 # 3. 从命令行中结构化解析参数
 args = parser.parse_args()
@@ -381,8 +381,9 @@ def run():
         if valid_loss.avg < best_loss:
             best_loss = valid_loss.avg
             print('train_loss:', train_loss.avg, ' valid_loss:', best_loss)
-            torch.save(model.state_dict(), f'{args.save_model_name}.bin')
+            torch.save(model.state_dict(), f'model{args.save_model_name}.bin')
             print('best model found for epoch {}'.format(epoch))
+            print(f'模型保存在model/{args.save_model_name}.bin')
 
 
 run()
