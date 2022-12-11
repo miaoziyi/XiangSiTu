@@ -1,7 +1,8 @@
 1.运行train.py：
 -t:训练集文件路径
+-s:训练模型保存名称
 ----------------------------------------------------------------------------------------------------
-python '.\metric learning train.py' --train_csv ../../txt/per_leafCid_250_1_StratifiedKFold_5.csv
+python '.\metric learning train.py' -t txt/per_leafCid_250_1_StratifiedKFold_5.csv -s model_test
 
 2.运行infer.py：
 -m：训练好的模型路径
@@ -14,7 +15,7 @@ XX.jpg
 XX.jpg
 XX.jpg
 -----------------------------
-python '.\metric learning infer.py' -m D:\mzy\mzy\main\model\model_efficientnet_b3_IMG_SIZE_512_arcface.bin -t D:\mzy\mzy\main\txt\img_test_path_new_rename.csv -i D:/xiangsitu/img_test_new_rename/
+python '.\metric learning infer.py' -m model\model_efficientnet_b3_IMG_SIZE_512_arcface_250_5_attention_lowLr.bin -t txt\img_test_path_new_rename.csv -i D:/xiangsitu/img_test_new_rename/
 
 3.运行find.py：
 -m：训练好的模型路径
@@ -43,5 +44,4 @@ imgPath
 -tr：测试集相对路径填写img_test_new_rename/
 保证最后生成的json文件图片路径均为img_test_new_rename/XX.jpg
 ----------------------------------------------------------------------
-python '.\metric learning find.py' -m D:\mzy\mzy\main\model\metric250\newTest\model_efficientnet_b3_IMG_SIZE_512_arcface_250_5.bin -tc D:\mzy\mzy\main\txt\query_test\img_test_path_new_rename.csv -ta D:/xiangsitu/ -tr img
-_test_new_rename/ -qc D:\mzy\mzy\main\txt\query_test\query-imgPath_new.csv -te D:\mzy\mzy\main\data\metric250\newTest\metric_learning_250_5.npy
+python '.\metric learning find.py' -m model\model_efficientnet_b3_IMG_SIZE_512_arcface_250_5_attention_lowLr.bin -tc txt\img_test_path_new_rename.csv -ta D:/xiangsitu/ -tr img_test_new_rename/ -qc txt/query-imgPath_new.csv -te embedding/metric_learning_250_5_attention_lowLr.npy
